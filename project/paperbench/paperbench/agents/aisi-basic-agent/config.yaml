@@ -14,26 +14,40 @@ aisi-basic-agent-openai-dev:
   <<: *common_settings
   env_vars:
     <<: *env-config-vars
-    MODEL: openai/gpt-4o-mini
-    MAX_TIME_IN_HOURS: 0.1
+    MODEL: openai/gpt-4o
+    MAX_TIME_IN_HOURS: 3
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    PB_CODE_ONLY: "true"
+    ITERATIVE_AGENT: true
 
 aisi-basic-agent-anthropic-dev:
   <<: *common_settings
   env_vars:
     <<: *env-config-vars
-    MODEL: anthropic/claude-3-5-haiku-latest
-    MAX_TIME_IN_HOURS: 0.1
+    MODEL: anthropic/claude-3-7-sonnet-20250219
+    MAX_TIME_IN_HOURS: 3
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    PB_CODE_ONLY: "true"
 
 aisi-basic-agent-gemini-dev:
   <<: *common_settings
   env_vars:
     <<: *env-config-vars
     MODEL: google/gemini-2.5-pro-preview-03-25
-    MAX_TIME_IN_HOURS: 0.1
+    MAX_TIME_IN_HOURS: 3
     GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
     PB_CODE_ONLY: "true"
+    ITERATIVE_AGENT: true
+
+aisi-basic-agent-llama4-dev:
+  <<: *common_settings
+  env_vars:
+    <<: *env-config-vars
+    MODEL: openrouter/meta-llama/llama-4-maverick
+    MAX_TIME_IN_HOURS: 120
+    OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    PB_CODE_ONLY: "true"
+    ITERATIVE_AGENT: true
 
 aisi-basic-agent-r1-dev:
   <<: *common_settings
