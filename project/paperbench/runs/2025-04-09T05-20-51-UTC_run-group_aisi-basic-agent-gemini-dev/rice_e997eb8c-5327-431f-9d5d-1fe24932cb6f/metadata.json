@@ -1,0 +1,9 @@
+{
+    "run_id": "rice_e997eb8c-5327-431f-9d5d-1fe24932cb6f",
+    "time_start": 1744176059.714935,
+    "time_end": 1744176967.8287108,
+    "error_msg": null,
+    "runtime_in_seconds": 908.113775730133,
+    "status_exists": true,
+    "skipped_rollout": false
+}
