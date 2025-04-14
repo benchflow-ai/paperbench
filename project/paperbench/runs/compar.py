@@ -3,8 +3,6 @@ import os
 import glob
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from matplotlib.colors import LinearSegmentedColormap
 from pathlib import Path
 import matplotlib.gridspec as gridspec
 
@@ -54,8 +52,8 @@ for file_path in result_files:
             display_name = "GPT-4"
         elif "llama" in agent_match.lower():
             display_name = "Llama 4"
-        elif "litellm" in agent_match.lower():
-            display_name = "Gemini via LiteLLM"
+        elif "litellm" in agent_match.lower() or "gemini" in agent_match.lower():
+            display_name = "Gemini 2.5 pro"
         else:
             display_name = agent_match
         
@@ -86,17 +84,18 @@ if model_data:
     # Sort by final score (descending)
     model_data.sort(key=lambda x: x['final_score'], reverse=True)
     
+    # Use a single consistent colormap - Blues
+    cmap = plt.colormaps['Blues']
+    
+    # Create consistent colors for each model (darker blue = higher score)
+    model_colors = [cmap(0.4 + 0.6 * score) for score in [m['final_score'] for m in model_data]]
+    
     # 1. Bar chart of final scores
     plt.figure(figsize=(12, 8))
     labels = [m['display_name'] for m in model_data]
     scores = [m['final_score'] for m in model_data]
     
-    # Create colormap
-    colors = ["#ff0000", "#ffff66", "#00cc44"]  # Red to yellow to green
-    custom_cmap = LinearSegmentedColormap.from_list("red_to_green", colors, N=256)
-    bar_colors = [custom_cmap(score) for score in scores]
-    
-    bars = plt.bar(labels, scores, color=bar_colors)
+    bars = plt.bar(labels, scores, color=model_colors)
     plt.ylim(0, 1)
     plt.xlabel('Model', fontsize=14)
     plt.ylabel('Final Score', fontsize=14)
@@ -114,56 +113,32 @@ if model_data:
     plt.savefig(output_dir / "score_comparison.png")
     plt.close()
     
-    # 2. Grid of model trees with bar chart
-    # Create a 2x3 grid (or adjust based on number of models)
-    rows = 2
-    cols = 3
-    fig = plt.figure(figsize=(20, 15))
-    grid = gridspec.GridSpec(rows, cols, figure=fig)
+    # 2. Grid of model trees - exactly 2x2
+    fig = plt.figure(figsize=(20, 20))
     
-    # Add bar chart at the top spanning multiple columns
-    ax_bar = fig.add_subplot(grid[0, :2])  # Top-left spanning 2 columns
-    bars = ax_bar.bar(labels, scores, color=bar_colors)
-    ax_bar.set_ylim(0, 1)
-    ax_bar.set_title('Model Performance Comparison', fontsize=16)
-    ax_bar.grid(axis='y', linestyle='--', alpha=0.7)
-    for bar in bars:
-        height = bar.get_height()
-        ax_bar.text(bar.get_x() + bar.get_width()/2., height + 0.01,
-                f'{height:.2f}', ha='center', va='bottom', fontsize=12)
-    
-    # Create a table to show final scores
-    ax_table = fig.add_subplot(grid[0, 2])  # Top-right
-    cell_text = [[m['display_name'], f"{m['final_score']:.2f}"] for m in model_data]
-    ax_table.axis('tight')
-    ax_table.axis('off')
-    table = ax_table.table(cellText=cell_text, 
-                          colLabels=['Model', 'Score'],
-                          loc='center',
-                          cellLoc='center')
-    table.auto_set_font_size(False)
-    table.set_fontsize(12)
-    table.scale(1, 1.5)
-    ax_table.set_title("Final Scores", fontsize=16)
+    # Create a simple 2x2 grid
+    gs = gridspec.GridSpec(2, 2, figure=fig)
     
     # Add model thumbnail images from the tree visualizations
     for i, model in enumerate(model_data):
-        if i < (rows-1) * cols:  # Limit to available grid slots
-            row_idx = 1 + i // cols
-            col_idx = i % cols
+        if i >= 4:  # Only show top 4 models
+            break
             
-            ax = fig.add_subplot(grid[row_idx, col_idx])
-            
-            # Get the visualization file for this model
-            viz_file = output_dir / f"{model['model_name']}_{model['agent_type']}_tree.png"
-            if viz_file.exists():
-                img = plt.imread(viz_file)
-                ax.imshow(img)
-                ax.set_title(f"{model['display_name']} ({model['final_score']:.2f})", fontsize=14)
-            else:
-                ax.text(0.5, 0.5, "Visualization not available", 
-                       ha='center', va='center', fontsize=12)
-            ax.axis('off')
+        row_idx = i // 2
+        col_idx = i % 2
+        
+        ax = fig.add_subplot(gs[row_idx, col_idx])
+        
+        # Get the visualization file for this model
+        viz_file = output_dir / f"{model['model_name']}_{model['agent_type']}_tree.png"
+        if viz_file.exists():
+            img = plt.imread(viz_file)
+            ax.imshow(img)
+            ax.set_title(f"{model['display_name']} - Score: {model['final_score']:.2f}", fontsize=16)
+        else:
+            ax.text(0.5, 0.5, "Visualization not available", 
+                   ha='center', va='center', fontsize=12)
+        ax.axis('off')
     
     plt.tight_layout()
     plt.savefig(output_dir / "model_comparison_grid.png")
@@ -186,14 +161,14 @@ if model_data:
     ax.axis('tight')
     ax.axis('off')
     
-    # Set custom colors for rows based on scores
+    # Set consistent blue-themed colors for rows
     cell_colors = []
-    for model in model_data:
-        score = model['final_score']
-        color = custom_cmap(score)
-        # Make a slightly lighter version for better readability
-        lighter_color = [min(1.0, c * 1.3) for c in color[:3]] + [0.3]  # Last value is alpha
-        cell_colors.append([lighter_color, lighter_color, lighter_color])
+    for i, model in enumerate(model_data):
+        color = cmap(0.3 + 0.7 * model['final_score'])  # Scale to use middle-to-high range of colormap
+        # Add slight alpha for better readability
+        adjusted_color = (*color[:3], 0.3)  # RGB with alpha 0.3
+        row_color = [adjusted_color] * 3  # Apply to all cells in the row
+        cell_colors.append(row_color)
     
     table = ax.table(cellText=table_data,
                     colLabels=["Rank", "Model", "Score"],

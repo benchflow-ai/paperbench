@@ -9,7 +9,7 @@ The `images` directory contains score tree visualizations for different models' 
 - Claude 3.7 (Anthropic)
 - GPT-4 (OpenAI)
 - Llama 4
-- Gemini 2.5 pro via LiteLLM
+- Gemini 2.5 pro
 
 ### Comparative Analysis
 
@@ -19,19 +19,7 @@ The `images` directory contains score tree visualizations for different models' 
 #### Overview Comparison
 ![Model Comparison Grid](images/model_comparison_grid.png)
 
-### Individual Model Visualizations
-
-#### Claude (Anthropic)
-![Claude Score Tree](images/rice_aisi-basic-agent-anthropic-dev_tree.png)
-
-#### GPT-4 (OpenAI)
-![OpenAI Score Tree](images/rice_aisi-basic-agent-openai-dev_tree.png)
-
-#### Llama 4
-![Llama4 Score Tree](images/rice_aisi-basic-agent-llama4-dev_tree.png)
-
-#### Gemini via LiteLLM
-![Gemini LiteLLM Score Tree](images/rice_aisi-basic-agent-gemini-litellm-dev_tree.png)
+#### Experiments Settings
 
 All runs:
 - Used the "code only" version of the agents (no paper content provided)
