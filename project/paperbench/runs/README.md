@@ -1,21 +1,8 @@
 # PaperBench Run Results
 
-This directory contains the results of different AI agent runs attempting to reproduce research papers. Each run is organized in a timestamped directory with the following structure:
+This directory contains the results of different AI agent runs attempting to reproduce research papers.
 
-## Directory Structure
-
-Each run directory follows this naming pattern:
-```
-YYYY-MM-DDThh-mm-ss-UTC_run-group_[agent-name]
-```
-
-For example:
-- `2025-04-09T04-38-44-UTC_run-group_aisi-basic-agent-anthropic-dev/`
-- `2025-04-09T12-51-39-UTC_run-group_aisi-basic-agent-openai-dev/`
-- `2025-04-09T10-52-42-UTC_run-group_aisi-basic-agent-llama4-dev/`
-- `2025-04-09T05-20-51-UTC_run-group_aisi-basic-agent-gemini-dev/`
-
-## Visualizations
+## Results
 
 The `images` directory contains score tree visualizations for different models' performance on the paper reproduction tasks. We ran experiments with the following LLM backends:
 
