@@ -19,7 +19,7 @@ The `images` directory contains score tree visualizations for different models' 
 #### Overview Comparison
 ![Model Comparison Grid](images/model_comparison_grid.png)
 
-#### Experiments Settings
+## Experiments Settings
 
 All runs:
 - Used the "code only" version of the agents (no paper content provided)
