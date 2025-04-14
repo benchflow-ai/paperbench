@@ -15,6 +15,44 @@ For example:
 - `2025-04-09T10-52-42-UTC_run-group_aisi-basic-agent-llama4-dev/`
 - `2025-04-09T05-20-51-UTC_run-group_aisi-basic-agent-gemini-dev/`
 
+## Visualizations
+
+The `images` directory contains score tree visualizations for different models' performance on the paper reproduction tasks. We ran experiments with the following LLM backends:
+
+- Claude 3.7 (Anthropic)
+- GPT-4 (OpenAI)
+- Llama 4
+- Gemini 2.5 pro via LiteLLM
+
+### Comparative Analysis
+
+#### Performance
+![Model Performance Ranking](images/results.png)
+
+#### Overview Comparison
+![Model Comparison Grid](images/model_comparison_grid.png)
+
+### Individual Model Visualizations
+
+#### Claude (Anthropic)
+![Claude Score Tree](images/rice_aisi-basic-agent-anthropic-dev_tree.png)
+
+#### GPT-4 (OpenAI)
+![OpenAI Score Tree](images/rice_aisi-basic-agent-openai-dev_tree.png)
+
+#### Llama 4
+![Llama4 Score Tree](images/rice_aisi-basic-agent-llama4-dev_tree.png)
+
+#### Gemini via LiteLLM
+![Gemini LiteLLM Score Tree](images/rice_aisi-basic-agent-gemini-litellm-dev_tree.png)
+
+All runs:
+- Used the "code only" version of the agents (no paper content provided)
+- Took approximately 3 hours to complete each run
+- Were evaluated on their ability to reproduce the Rice paper
+
+The final scores shown in the visualizations are calculated based on a weighted tree structure. Each node in the tree represents a specific task or subtask, with its own score (0-1). The final percentage is computed by aggregating these node scores up the tree, with each parent node's score being a weighted average of its children nodes' scores according to their predefined importance weights.
+
 ## Run Contents
 
 Each run directory contains:

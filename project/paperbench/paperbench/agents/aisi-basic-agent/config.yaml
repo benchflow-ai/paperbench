@@ -18,7 +18,15 @@ aisi-basic-agent-openai-dev:
     MAX_TIME_IN_HOURS: 3
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     PB_CODE_ONLY: "true"
-    ITERATIVE_AGENT: true
+
+aisi-basic-agent-openai-o3-dev:
+  <<: *common_settings
+  env_vars:
+    <<: *env-config-vars
+    MODEL: openai/o3-mini-2025-01-31
+    MAX_TIME_IN_HOURS: 3
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    PB_CODE_ONLY: "true"
 
 aisi-basic-agent-gemini-litellm-dev:
   <<: *common_settings
