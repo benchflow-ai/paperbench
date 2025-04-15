@@ -7,7 +7,8 @@ This directory contains the results of different AI agent runs attempting to rep
 The `images` directory contains score tree visualizations for different models' performance on the paper reproduction tasks. We ran experiments with the following LLM backends:
 
 - Claude 3.7 (Anthropic)
-- GPT-4 (OpenAI)
+- GPT-4o (OpenAI)
+- GPT-4.1 (OpenAI)
 - Llama 4
 - Gemini 2.5 pro
 

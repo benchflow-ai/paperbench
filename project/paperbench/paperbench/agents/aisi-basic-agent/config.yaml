@@ -28,6 +28,16 @@ aisi-basic-agent-openai-o3-dev:
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     PB_CODE_ONLY: "true"
 
+
+aisi-basic-agent-openai-gpt-4.1-dev:
+  <<: *common_settings
+  env_vars:
+    <<: *env-config-vars
+    MODEL: openai/gpt-4.1-2025-04-14
+    MAX_TIME_IN_HOURS: 3
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    PB_CODE_ONLY: "true"
+
 aisi-basic-agent-gemini-litellm-dev:
   <<: *common_settings
   env_vars:

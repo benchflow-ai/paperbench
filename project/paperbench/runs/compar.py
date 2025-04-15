@@ -16,6 +16,8 @@ os.makedirs(output_dir, exist_ok=True)
 # Find all pb_result.json files in the runs directory and its subdirectories
 result_files = list(base_dir.glob("**/*pb_result.json"))
 print(f"Found {len(result_files)} result files")
+for rf in result_files:
+    print(f"  - {rf}")
 
 # Extract model data and scores
 model_data = []
@@ -27,15 +29,21 @@ for file_path in result_files:
         
         # Get the agent type from grandparent directory 
         agent_match = ""
-        parent_parts = file_path.parent.parent.name.split('_')
+        parent_dir = file_path.parent.parent
+        parent_path = str(parent_dir)
+        print(f"Analyzing parent directory: {parent_path}")
+        
+        parent_parts = parent_dir.name.split('_')
         for part in parent_parts:
-            if any(x in part.lower() for x in ["agent", "gemini", "gpt", "claude"]):
+            if any(x in part.lower() for x in ["agent", "gemini", "gpt", "claude", "llama"]):
                 agent_match = part
                 break
                 
         # Fall back to a substring if needed
         if not agent_match and len(parent_parts) > 3:
             agent_match = parent_parts[3]
+            
+        print(f"  Agent match found: {agent_match}")
         
         # Load JSON data
         with open(file_path, "r", encoding="utf-8") as f:
@@ -46,16 +54,22 @@ for file_path in result_files:
         final_score = root_task.get("score", 0)
         
         # Get model display name
-        if "anthropic" in agent_match.lower():
+        if "anthropic" in parent_path.lower():
             display_name = "Claude 3.7"
-        elif "openai" in agent_match.lower():
-            display_name = "GPT-4"
-        elif "llama" in agent_match.lower():
+        elif "gpt-4o" in parent_path.lower() or "gpt4o" in parent_path.lower():
+            display_name = "GPT-4o"
+        elif "gpt-4.1" in parent_path.lower() or "gpt4.1" in parent_path.lower():
+            display_name = "GPT-4.1"
+        elif "openai" in parent_path.lower():
+            display_name = "GPT-4"  # Default for other OpenAI models
+        elif "llama" in parent_path.lower():
             display_name = "Llama 4"
-        elif "litellm" in agent_match.lower() or "gemini" in agent_match.lower():
+        elif "litellm" in parent_path.lower() or "gemini" in parent_path.lower():
             display_name = "Gemini 2.5 pro"
         else:
             display_name = agent_match
+        
+        print(f"  Identified as: {display_name}")
         
         # Store relevant data
         model_info = {
@@ -63,7 +77,8 @@ for file_path in result_files:
             'display_name': display_name,
             'final_score': final_score,
             'file_path': file_path,
-            'model_name': model_name
+            'model_name': model_name,
+            'parent_path': parent_path
         }
         
         # Extract subtask scores if available
@@ -74,10 +89,14 @@ for file_path in result_files:
                 model_info[name] = score
         
         model_data.append(model_info)
-        print(f"Extracted data for {display_name}")
+        print(f"Extracted data for {display_name}, score: {final_score:.2f}")
     
     except Exception as e:
         print(f"Error processing {file_path}: {e}")
+
+print(f"Total models identified: {len(model_data)}")
+for model in model_data:
+    print(f"  - {model['display_name']} (from {model['parent_path']})")
 
 # Create comparison visualizations
 if model_data:
@@ -129,14 +148,28 @@ if model_data:
         
         ax = fig.add_subplot(gs[row_idx, col_idx])
         
-        # Get the visualization file for this model
+        # Get the visualization file for this model - try both possible naming patterns
         viz_file = output_dir / f"{model['model_name']}_{model['agent_type']}_tree.png"
+        
+        # Check different possible filenames
+        if not viz_file.exists():
+            print(f"Looking for visualization file for {model['display_name']}")
+            print(f"  Tried: {viz_file}")
+            
+            # Try different ways to find the file
+            for potential_file in output_dir.glob(f"{model['model_name']}_*_tree.png"):
+                print(f"  Found potential match: {potential_file}")
+                viz_file = potential_file
+                break
+        
         if viz_file.exists():
+            print(f"Using visualization: {viz_file}")
             img = plt.imread(viz_file)
             ax.imshow(img)
             ax.set_title(f"{model['display_name']} - Score: {model['final_score']:.2f}", fontsize=16)
         else:
-            ax.text(0.5, 0.5, "Visualization not available", 
+            print(f"⚠️ No visualization found for {model['display_name']}")
+            ax.text(0.5, 0.5, f"Visualization not available for {model['display_name']}", 
                    ha='center', va='center', fontsize=12)
         ax.axis('off')
     
