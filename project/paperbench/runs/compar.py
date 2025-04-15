@@ -16,8 +16,6 @@ os.makedirs(output_dir, exist_ok=True)
 # Find all pb_result.json files in the runs directory and its subdirectories
 result_files = list(base_dir.glob("**/*pb_result.json"))
 print(f"Found {len(result_files)} result files")
-for rf in result_files:
-    print(f"  - {rf}")
 
 # Extract model data and scores
 model_data = []
@@ -31,7 +29,6 @@ for file_path in result_files:
         agent_match = ""
         parent_dir = file_path.parent.parent
         parent_path = str(parent_dir)
-        print(f"Analyzing parent directory: {parent_path}")
         
         parent_parts = parent_dir.name.split('_')
         for part in parent_parts:
@@ -42,8 +39,9 @@ for file_path in result_files:
         # Fall back to a substring if needed
         if not agent_match and len(parent_parts) > 3:
             agent_match = parent_parts[3]
-            
-        print(f"  Agent match found: {agent_match}")
+        
+        # Extract the full agent string for file matching
+        full_agent = "-".join(parent_dir.name.split('_')[2:])
         
         # Load JSON data
         with open(file_path, "r", encoding="utf-8") as f:
@@ -53,32 +51,29 @@ for file_path in result_files:
         root_task = data["paperbench_result"]["judge_output"]["graded_task_tree"]
         final_score = root_task.get("score", 0)
         
-        # Get model display name
+        # Get model display name based on the directory name
         if "anthropic" in parent_path.lower():
             display_name = "Claude 3.7"
+        elif "gpt-4.1" in parent_path.lower():
+            display_name = "GPT-4.1"
         elif "gpt-4o" in parent_path.lower() or "gpt4o" in parent_path.lower():
             display_name = "GPT-4o"
-        elif "gpt-4.1" in parent_path.lower() or "gpt4.1" in parent_path.lower():
-            display_name = "GPT-4.1"
-        elif "openai" in parent_path.lower():
-            display_name = "GPT-4"  # Default for other OpenAI models
         elif "llama" in parent_path.lower():
             display_name = "Llama 4"
         elif "litellm" in parent_path.lower() or "gemini" in parent_path.lower():
             display_name = "Gemini 2.5 pro"
         else:
-            display_name = agent_match
-        
-        print(f"  Identified as: {display_name}")
+            # 如果没有匹配到特定模型，显示默认名称
+            display_name = "Unknown Model"
+            print(f"Could not identify model from path: {parent_path}")
         
         # Store relevant data
         model_info = {
-            'agent_type': agent_match,
+            'agent_type': full_agent,  # Store the full agent string for file matching
             'display_name': display_name,
             'final_score': final_score,
             'file_path': file_path,
-            'model_name': model_name,
-            'parent_path': parent_path
+            'model_name': model_name
         }
         
         # Extract subtask scores if available
@@ -95,8 +90,13 @@ for file_path in result_files:
         print(f"Error processing {file_path}: {e}")
 
 print(f"Total models identified: {len(model_data)}")
-for model in model_data:
-    print(f"  - {model['display_name']} (from {model['parent_path']})")
+
+# Check which models from README.md are missing
+expected_models = ["Claude 3.7", "GPT-4o", "GPT-4.1", "Llama 4", "Gemini 2.5 pro"]
+found_models = [m['display_name'] for m in model_data]
+missing_models = [m for m in expected_models if m not in found_models]
+if missing_models:
+    print(f"WARNING: The following models from README.md are missing: {missing_models}")
 
 # Create comparison visualizations
 if model_data:
@@ -132,45 +132,57 @@ if model_data:
     plt.savefig(output_dir / "score_comparison.png")
     plt.close()
     
-    # 2. Grid of model trees - exactly 2x2
-    fig = plt.figure(figsize=(20, 20))
+    # 2. Grid of model trees - exactly 2x3 (to fit all 5 models plus empty space)
+    num_models = len(model_data)
+    rows = 2
+    cols = 3
     
-    # Create a simple 2x2 grid
-    gs = gridspec.GridSpec(2, 2, figure=fig)
+    fig = plt.figure(figsize=(22, 15))
+    
+    # Create a 2x3 grid 
+    gs = gridspec.GridSpec(rows, cols, figure=fig)
     
     # Add model thumbnail images from the tree visualizations
     for i, model in enumerate(model_data):
-        if i >= 4:  # Only show top 4 models
+        if i >= rows * cols:  # Should include all 5 models
             break
             
-        row_idx = i // 2
-        col_idx = i % 2
+        row_idx = i // cols
+        col_idx = i % cols
         
         ax = fig.add_subplot(gs[row_idx, col_idx])
         
-        # Get the visualization file for this model - try both possible naming patterns
+        # Get the visualization file for this model
+        # Use the exact file naming pattern that visal.py generates
         viz_file = output_dir / f"{model['model_name']}_{model['agent_type']}_tree.png"
         
-        # Check different possible filenames
-        if not viz_file.exists():
-            print(f"Looking for visualization file for {model['display_name']}")
-            print(f"  Tried: {viz_file}")
-            
-            # Try different ways to find the file
-            for potential_file in output_dir.glob(f"{model['model_name']}_*_tree.png"):
-                print(f"  Found potential match: {potential_file}")
-                viz_file = potential_file
-                break
-        
         if viz_file.exists():
-            print(f"Using visualization: {viz_file}")
             img = plt.imread(viz_file)
             ax.imshow(img)
             ax.set_title(f"{model['display_name']} - Score: {model['final_score']:.2f}", fontsize=16)
         else:
-            print(f"⚠️ No visualization found for {model['display_name']}")
-            ax.text(0.5, 0.5, f"Visualization not available for {model['display_name']}", 
-                   ha='center', va='center', fontsize=12)
+            print(f"No visualization found for {model['display_name']}, tried: {viz_file}")
+            # Try to find by display name
+            potential_files = list(output_dir.glob(f"{model['model_name']}_*{model['display_name'].lower().replace(' ', '-').replace('.', '')}*_tree.png"))
+            if not potential_files:
+                # Try broader search
+                potential_files = list(output_dir.glob(f"{model['model_name']}_*_tree.png"))
+                for viz_path in potential_files:
+                    filename = str(viz_path.name).lower()
+                    model_keywords = model['display_name'].lower().split()
+                    if any(keyword in filename for keyword in model_keywords):
+                        viz_file = viz_path
+                        break
+            elif potential_files:
+                viz_file = potential_files[0]
+                
+            if viz_file.exists():
+                img = plt.imread(viz_file)
+                ax.imshow(img)
+                ax.set_title(f"{model['display_name']} - Score: {model['final_score']:.2f}", fontsize=16)
+            else:
+                ax.text(0.5, 0.5, f"Visualization not available for {model['display_name']}", 
+                       ha='center', va='center', fontsize=12)
         ax.axis('off')
     
     plt.tight_layout()
